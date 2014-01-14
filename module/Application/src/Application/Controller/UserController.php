@@ -84,6 +84,9 @@ class UserController extends AbstractActionController
     public function authenticateAction()
     {
         $form = $this->getUserLoginForm();
+        $inputFilter = $form->getInputFilter();
+        $inputFilter->remove('password-confirm');
+
         $redirect = 'user/login';
 
         $request = $this->getRequest();
@@ -95,7 +98,7 @@ class UserController extends AbstractActionController
                                        ->setIdentityValue($request->getPost('username'))
                                        ->setCredentialValue($request->getPost('password'));
 
-                $result = $this->getAuthService()->authenticate();
+                $result = $this->getAuthService()->authenticate();var_dump($result);exit;
                 foreach($result->getMessages() as $message) {
                     //save message temporary into flashmessenger
                     $this->flashmessenger()->addMessage($message);
