@@ -28,34 +28,46 @@ return array(
                     ),
                 ),
             ),
-            'cart' => array(
+            'user' => array(
                 'type'    => 'Literal',
                 'options' => array(
-                    'route'    => '/cart',
+                    'route'    => '/user',
                     'defaults' => array(
-                        'controller' => 'Application\Controller\Cart',
-                        'action'     => 'index',
+                        'controller'    => 'Application\Controller\User',
+                        'action'        => 'login',
                     ),
                 ),
                 'may_terminate' => true,
                 'child_routes' => array(
-                    'default' => array(
+                    'login' => array(
                         'type'    => 'Literal',
                         'options' => array(
-                            'route'    => '/add',
+                            'route'    => '/login',
                             'defaults' => array(
-                                'controller' => 'Application\Controller\Cart',
-                                'action'     => 'add',
+                                'controller' => 'Application\Controller\User',
+                                'action'     => 'login',
                             ),
                         ),
                     ),
-                    'cart' => array(
+                    'process' => array(
+                        'type'    => 'Segment',
+                        'options' => array(
+                            'route'    => '/[:action]',
+                            'constraints' => array(
+                                'controller' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                                'action'     => '[a-zA-Z][a-zA-Z0-9_-]*',
+                            ),
+                            'defaults' => array(
+                            ),
+                        ),
+                    ),
+                    'success' => array(
                         'type'    => 'Literal',
                         'options' => array(
-                            'route'    => '/cart',
+                            'route'    => '/success',
                             'defaults' => array(
-                                'controller' => 'Application\Controller\Cart',
-                                'action'     => 'cart',
+                                'controller' => 'Application\Controller\User',
+                                'action'     => 'loginsuccess',
                             ),
                         ),
                     ),
@@ -81,7 +93,9 @@ return array(
                 $serviceLocator = $controllerManager->getServiceLocator();
 
                 $controller = new \Application\Controller\UserController(
-                    $serviceLocator->get('Zend\Authentication\AuthenticationService')
+                    $serviceLocator->get('Zend\Authentication\AuthenticationService'),
+                    $serviceLocator->get('Application\Service\User'),
+                    $serviceLocator->get('Application\Service\AuthStorage')
                 );
 
                 return $controller;
@@ -116,12 +130,28 @@ return array(
 
                 return $form;
             },
+            'Application\Form\User\Login' => function ($sm) {
+                $inputFilter = $sm->get('Application\Entity\User')->getInputFilter();
+                $form = new \Application\Form\User\Login($sm);
+                $form->setInputFilter($inputFilter);
+
+                return $form;
+            },
+            'Application\Form\User\Registration' => function ($sm) {
+                $inputFilter = $sm->get('Application\Entity\User')->getInputFilter();
+                $form = new \Application\Form\User\Registration($sm);
+                $form->setInputFilter($inputFilter);
+
+                return $form;
+            },
         ),
         'invokables' => array(
             // Entities
             'Application\Entity\Album' => 'Application\Entity\Album',
+            'Application\Entity\User' => 'Application\Entity\User',
             // Service
-            'Application\Service\Auth' => 'Application\Service\Auth',
+            'Application\Service\User' => 'Application\Service\User',
+            'Application\Service\AuthStorage' => 'Application\Service\AuthStorage',
         ),
         'aliases' => array(
             'translator' => 'MvcTranslator',
@@ -168,10 +198,11 @@ return array(
         ),
         'authentication' => array(
             'orm_default' => array(
-                'object_manager' => 'Doctrine\ORM\EntityManager',
-                'identity_class' => 'Application\Entity\User',
-                'identity_property' => 'email',
-                'credential_property' => 'password',
+                'objectManager' => 'Doctrine\ORM\EntityManager',
+                'identityClass' => 'Application\Entity\User',
+                'identityProperty' => 'email',
+                'credentialProperty' => 'password',
+                'credentialCallable' => 'Application\Entity\User::hashPassword'
             ),
         ),
     ),

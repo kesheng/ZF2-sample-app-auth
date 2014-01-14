@@ -5,7 +5,7 @@ namespace Application\Service;
 use Sglib\Service\AbstractService;
 use Application\Entity\User as UserEntity;
 
-class Auth extends AbstractService
+class User extends AbstractService
 {
     protected $ablumForm;
 

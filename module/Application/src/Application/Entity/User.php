@@ -37,6 +37,11 @@ class User extends AbstractModel
     public $password;
 
     /**
+     * @ORM\Column(name="salt", type="string", length=255)
+     */
+    public $salt;
+
+    /**
      * @ORM\Column(name="rememberme", type="boolean", nullable=false, options={"default" = 0})
      */
     public $rememberme;
@@ -52,51 +57,100 @@ class User extends AbstractModel
     protected $createdAt;
 
 
+
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+
+    public function setPassword($plaintextPassword, $salt)
+    {
+        $this->password = crypt($plaintextPassword, '$5$rounds=5000$'.$salt.'$');
+        return $this;
+    }
+
+
+    public static function hashPassword($user, $password)
+    {
+        return ($user->getPassword() === crypt($password, $user->getPassword()));
+    }
+
+
     public function getInputFilter()
     {
         if (!$this->inputFilter) {
             $inputFilter = new InputFilter();
 
-            $inputFilter->add(array(
-                'name' => 'email',
-                'type' => 'Zend\Form\Element\Email',
-                'required' => true,
-                'filters' => array(
-                    'name' => 'StripTags',
-                    'name' => 'StringTrim',
-                ),
-                'validators' => array(
-                    'name' => 'EmailAddress',
-                    'options' => array(
-                        'encoding' => 'UTF-8',
-                        'min'      => 5,
-                        'max'      => 255,
-                        'messages' => array(
-                            \Zend\Validator\EmailAddress::INVALID_FORMAT => 'Email address format is invalid'
-                        )
-                    )
-                ),
-            ));
-
-            $inputFilter->add(array(
-                'name' => 'password',
-                'type' => 'Zend\Form\Element\Password',
-                'required' => true,
-                'filters' => array('name' => 'StringTrim'),
-                'validators' => array(
-                    'name' => 'StringLength',
-                    'options' => array(
-                        'encoding' => 'UTF-8',
-                        'min'      => 6,
-                        'max'      => 128,
+            $inputFilter->add(
+                array(
+                    'name' => 'email',
+                    'required' => true,
+                    'filters'  => array(
+                        array('name' => 'StripTags'),
+                        array('name' => 'StringTrim'),
                     ),
-                ),
-            ));
+                    'validators' => array(
+                        array(
+                            'name'    => 'NotEmpty',
+                            'options' => array(
+                                'encoding' => 'UTF-8',
+                                'messages' => array(
+                                    'isEmpty' => 'Please enter your email address',
+                                )
+                            ),
+                        ),
+                        array(
+                            'name' => 'EmailAddress',
+                            'options' => array(
+                                'messages' => array(
+                                    'emailAddressInvalidFormat' => 'Please enter a valid email address in the format name@emailaddress',
+                                )
+                            )
+                        ),
+                    ),
+                )
+            );
+
+            $inputFilter->add(
+                array(
+                    'name' => 'password',
+                    'required' => true,
+                    'filters' => array(
+                        array('name' => 'StringTrim'),
+                    ),
+                    'validators' => array(
+                        array(
+                            'name'    => 'NotEmpty',
+                            'options' => array(
+                                'encoding' => 'UTF-8',
+                                'messages' => array(
+                                    'isEmpty' => 'Please enter your password',
+                                )
+                            ),
+                        ),
+                        array(
+                            'name'    => 'StringLength',
+                            'options' => array(
+                                'encoding' => 'UTF-8',
+                                'min' => 6,
+                                'max' => 128,
+                            )
+                        ),
+                        array(
+                            'name' => 'identical',
+                            'options' => array('token' => 'password' )
+                        ),
+                    ),
+                )
+            );
 
             $inputFilter->add(array(
                 'name' => 'password-confirm',
                 'required' => true,
-                'filters' => array('name' => 'StringTrim'),
+                'filters' => array(
+                    array('name' => 'StringTrim'),
+                ),
                 'validators' => array(
                     array(
                         'name'    => 'StringLength',

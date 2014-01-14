@@ -70,4 +70,18 @@ class Album extends AbstractService
             return false;
         }
     }
+
+
+    public function getApplicationForm()
+    {
+        return $this->ablumForm;
+    }
+
+
+    public function setApplicationForm($ablumForm)
+    {
+        $this->ablumForm = $ablumForm;
+
+        return $this;
+    }
 }

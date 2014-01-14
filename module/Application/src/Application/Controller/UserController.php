@@ -9,6 +9,8 @@ use Zend\EventManager\EventManagerInterface;
 class UserController extends AbstractActionController
 {
     protected $authService;
+    protected $userService;
+    protected $pcService;
     protected $authStorage;
     protected $userRegistrationForm;
     protected $userLoginForm;
@@ -16,11 +18,13 @@ class UserController extends AbstractActionController
 
 
     public function __construct(
-        \Application\Service\Auth  $authService,
+        \Zend\Authentication\AuthenticationService  $authService,
+        \Application\Service\User  $userService,
         \Application\Service\AuthStorage  $authStorage
     )
     {
         $this->authService  = $authService;
+        $this->userService  = $userService;
         $this->authStorage  = $authStorage;
     }
 
@@ -45,11 +49,17 @@ class UserController extends AbstractActionController
     }
 
 
+    public function index()
+    {
+        return false;
+    }
+
+
     public function loginAction()
     {
         //if already login, redirect to success page
         if ($this->getAuthService()->hasIdentity()){
-            return $this->redirect()->toRoute('success');
+            return $this->redirect()->toRoute('user/success');
         }
 
         $form = $this->getUserLoginForm();
@@ -61,10 +71,20 @@ class UserController extends AbstractActionController
     }
 
 
+    public function loginsuccessAction()
+    {
+        if (! $this->getAuthService()->hasIdentity()) {
+            return $this->redirect()->toRoute('user/login');
+        }
+
+        return new ViewModel();
+    }
+
+
     public function authenticateAction()
     {
-        $form       = $this->getForm();
-        $redirect = 'login';
+        $form = $this->getUserLoginForm();
+        $redirect = 'user/login';
 
         $request = $this->getRequest();
         if ($request->isPost()){
@@ -76,14 +96,13 @@ class UserController extends AbstractActionController
                                        ->setCredentialValue($request->getPost('password'));
 
                 $result = $this->getAuthService()->authenticate();
-                foreach($result->getMessages() as $message)
-                {
+                foreach($result->getMessages() as $message) {
                     //save message temporary into flashmessenger
                     $this->flashmessenger()->addMessage($message);
                 }
 
                 if ($result->isValid()) {
-                    $redirect = 'success';
+                    $redirect = 'user/success';
                     //check if it has rememberMe :
                     if ($request->getPost('rememberme') == 1 ) {
                         $this->getSessionStorage()
@@ -94,9 +113,16 @@ class UserController extends AbstractActionController
 
                     $this->getAuthService()->getStorage()->write($request->getPost('username'));
                 }
+            } else {
+                foreach ($form->getMessages() as $messages) {
+                    foreach ($messages as $message) {
+                        $this->flashmessenger()->addMessage($message);
+                    }
+                }
             }
         }
 
+        //var_dump($form->getMessages());exit;
         return $this->redirect()->toRoute($redirect);
     }
 
@@ -107,21 +133,28 @@ class UserController extends AbstractActionController
         $this->getAuthService()->clearIdentity();
 
         $this->flashmessenger()->addMessage("You've been logged out");
-        return $this->redirect()->toRoute('login');
+        return $this->redirect()->toRoute('user/login');
     }
-
-
 
 
 
 
     public function getAuthService()
     {
-        if (empty($this->authservice) === true) {
-            $this->authservice = $this->getServiceLocator()->get('Application\Service\Auth');
+        if (empty($this->authService) === true) {
+            $this->authService = $this->getServiceLocator()->get('Zend\Authentication\AuthenticationService');
         }
 
-        return $this->authservice;
+        return $this->authService;
+    }
+
+    public function getUserService()
+    {
+        if (empty($this->userService) === true) {
+            $this->userService = $this->getServiceLocator()->get('Application\Service\User');
+        }
+
+        return $this->userService;
     }
 
 
@@ -138,7 +171,7 @@ class UserController extends AbstractActionController
     public function getUserLoginForm()
     {
         if (empty($this->userLoginForm) === true) {
-            $this->userLoginForm = $this->getServiceLocator()->get('Application\Form\User\LoginForm');
+            $this->userLoginForm = $this->getServiceLocator()->get('Application\Form\User\Login');
         }
 
         return $this->userLoginForm;
@@ -156,7 +189,7 @@ class UserController extends AbstractActionController
     public function getUserRegistrationForm()
     {
         if (empty($this->userRegistrationForm) === true) {
-            $this->userRegistrationForm = $this->getServiceLocator()->get('Application\Form\User\RegistrationForm');
+            $this->userRegistrationForm = $this->getServiceLocator()->get('Application\Form\User\Registration');
         }
 
         return $this->userRegistrationForm;
