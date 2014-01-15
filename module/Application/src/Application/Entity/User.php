@@ -13,7 +13,7 @@ use Sglib\Model\AbstractModel;
  * An user.
  *
  * @ORM\Entity
- * @ORM\Table(name="album")
+ * @ORM\Table(name="user")
  */
 class User extends AbstractModel
 {
@@ -24,10 +24,10 @@ class User extends AbstractModel
      * @ORM\Column(type="integer");
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
-    protected $id;
+    protected $user_id;
 
     /**
-     * @ORM\Column(name="email", type="string", length=255)
+     * @ORM\Column(name="email", type="string", nullable=false, length=255)
      */
     public $email;
 
@@ -40,6 +40,11 @@ class User extends AbstractModel
      * @ORM\Column(name="salt", type="string", length=255)
      */
     public $salt;
+
+    /**
+     * @ORM\Column(name="username", type="string", length=255)
+     */
+    public $username;
 
     /**
      * @ORM\Column(name="rememberme", type="boolean", nullable=false, options={"default" = 0})
@@ -64,16 +69,31 @@ class User extends AbstractModel
     }
 
 
-    public function setPassword($plaintextPassword, $salt)
+    public function getSalt()
     {
-        $this->password = crypt($plaintextPassword, '$5$rounds=5000$'.$salt.'$');
-        return $this;
+        return $this->salt;
+    }
+
+
+    public function setPassword($plaintextPassword)
+    {
+        $salt = "";
+        $rounds = 7;
+        $salt_chars = array_merge(range('A','Z'), range('a','z'), range(0,9));
+        for($i=0; $i < 22; $i++) {
+          $salt .= $salt_chars[array_rand($salt_chars)];
+        }
+
+        $salt = sprintf('$2a$%02d$', $rounds) . $salt;
+
+        $this->password = $password = crypt('password', $salt);
+        return $this->password;
     }
 
 
     public static function hashPassword($user, $password)
     {
-        return ($user->getPassword() === crypt($password, $user->getPassword()));
+        return ($user->getPassword() === crypt($password, $user->getSalt()));
     }
 
 

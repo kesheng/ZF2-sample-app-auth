@@ -49,8 +49,20 @@ class UserController extends AbstractActionController
     }
 
 
-    public function index()
+    public function indexAction()
     {
+        $salt = "";
+        $rounds = 7;
+        $salt_chars = array_merge(range('A','Z'), range('a','z'), range(0,9));
+        for($i=0; $i < 22; $i++) {
+          $salt .= $salt_chars[array_rand($salt_chars)];
+        }
+
+        $salt = sprintf('$2a$%02d$', $rounds) . $salt;
+        var_dump($salt);
+        $password = crypt('password', $salt);
+
+        var_dump($password);
         return false;
     }
 
@@ -95,10 +107,10 @@ class UserController extends AbstractActionController
             if ($form->isValid()){
                 //check authentication...
                 $this->getAuthService()->getAdapter()
-                                       ->setIdentityValue($request->getPost('username'))
+                                       ->setIdentityValue($request->getPost('email'))
                                        ->setCredentialValue($request->getPost('password'));
 
-                $result = $this->getAuthService()->authenticate();var_dump($result);exit;
+                $result = $this->getAuthService()->authenticate();
                 foreach($result->getMessages() as $message) {
                     //save message temporary into flashmessenger
                     $this->flashmessenger()->addMessage($message);
@@ -114,7 +126,7 @@ class UserController extends AbstractActionController
                         $this->getAuthService()->setStorage($this->getSessionStorage());
                     }
 
-                    $this->getAuthService()->getStorage()->write($request->getPost('username'));
+                    $this->getAuthService()->getStorage()->write($result->getIdentity());
                 }
             } else {
                 foreach ($form->getMessages() as $messages) {

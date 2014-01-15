@@ -34,7 +34,7 @@ return array(
                     'route'    => '/user',
                     'defaults' => array(
                         'controller'    => 'Application\Controller\User',
-                        'action'        => 'login',
+                        'action'        => 'index',
                     ),
                 ),
                 'may_terminate' => true,

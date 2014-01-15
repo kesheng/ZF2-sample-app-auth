@@ -4,7 +4,6 @@ namespace Application\Service;
 use Zend\Authentication\Storage;
 
 
-
 class AuthStorage  extends Storage\Session
 {
     public function setRememberMe($rememberMe = 0, $time = 1209600)
