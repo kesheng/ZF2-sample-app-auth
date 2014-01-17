@@ -84,6 +84,7 @@ return array(
                 $serviceLocator = $controllerManager->getServiceLocator();
 
                 $controller = new \Application\Controller\AlbumController(
+                    $serviceLocator->get('Zend\Authentication\AuthenticationService'),
                     $serviceLocator->get('Application\Service\Album')
                 );
 

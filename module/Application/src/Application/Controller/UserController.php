@@ -71,7 +71,7 @@ class UserController extends AbstractActionController
     {
         //if already login, redirect to success page
         if ($this->getAuthService()->hasIdentity()){
-            return $this->redirect()->toRoute('user/success');
+            return $this->redirect()->toRoute('home');
         }
 
         $form = $this->getUserLoginForm();
@@ -117,7 +117,7 @@ class UserController extends AbstractActionController
                 }
 
                 if ($result->isValid()) {
-                    $redirect = 'user/success';
+                    $redirect = 'home';
                     //check if it has rememberMe :
                     if ($request->getPost('rememberme') == 1 ) {
                         $this->getSessionStorage()
@@ -162,6 +162,7 @@ class UserController extends AbstractActionController
 
         return $this->authService;
     }
+
 
     public function getUserService()
     {

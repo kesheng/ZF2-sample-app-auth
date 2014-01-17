@@ -13,9 +13,11 @@ class AlbumController extends AbstractActionController
 
 
     public function __construct(
+        \Zend\Authentication\AuthenticationService  $authService,
         \Application\Service\Album  $albumService
     )
     {
+        $this->authService  = $authService;
         $this->albumService  = $albumService;
     }
 
@@ -33,7 +35,9 @@ class AlbumController extends AbstractActionController
         // using $this in the closure, which won’t work. need to pull the controller instance from the event and use it
         $controller = $this;
         $events->attach('dispatch', function ($e) use ($controller) {
-            //return $controller->redirect()->toRoute('home');
+            if ($controller->getAuthService()->hasIdentity() === false){
+                return $controller->redirect()->toRoute('user/login');
+            }
         }, 100); // execute before executing action logic
 
         return $this;
@@ -136,6 +140,16 @@ class AlbumController extends AbstractActionController
              'id'    => $id,
              'album' => $album
           );
+    }
+
+
+    public function getAuthService()
+    {
+        if (empty($this->authService) === true) {
+            $this->authService = $this->getServiceLocator()->get('Zend\Authentication\AuthenticationService');
+        }
+
+        return $this->authService;
     }
 
 

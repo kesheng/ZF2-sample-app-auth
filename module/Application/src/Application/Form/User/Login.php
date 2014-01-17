@@ -26,6 +26,18 @@ class Login extends \Zend\Form\Form
             ),
         ));
 
+        $this->add(
+            array(
+                'type' => 'Zend\Form\Element\Checkbox',
+                'name' => 'rememberme',
+                'options' => array(
+                    'label' => 'Remember Me',
+                    'checked_value' => 1,
+                    'unchecked_value' => 0
+                ),
+            )
+        );
+
         $this->add(array(
             'type' => 'Zend\Form\Element\Button',
             'name' => 'submit',
